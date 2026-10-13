@@ -9,6 +9,18 @@
 #include "thsemap.h"
 #include "xboxoneusb.h"
 
+// Force immediate flushing of queued USB HID reports
+#define PADEMU_NO_BUFFER 1
+
+static u8 ApplyStickSensitivity(u8 raw_val) {
+    int centered = (int)raw_val - 128;
+    if (centered > -12 && centered < 12) return 128;
+    float scaled = (float)centered * 1.35f;
+    if (scaled > 127.0f) scaled = 127.0f;
+    if (scaled < -128.0f) scaled = -128.0f;
+    return (u8)((int)scaled + 128);
+}
+
 //#define DPRINTF(x...) printf(x)
 #define DPRINTF(x...)
 
@@ -298,6 +310,11 @@ int xboxoneusb_get_data(u8 *dst, int size, int port)
         DPRINTF("XBOXONEUSB: XBOXONEUSB_get_data usb transfer error %d\n", ret);
     }
 
+    // Apply stick sensitivity scaling before/after memory copy
+    xboxonedev[port].data[2] = ApplyStickSensitivity(xboxonedev[port].data[2]); // Left Stick X
+    xboxonedev[port].data[3] = ApplyStickSensitivity(xboxonedev[port].data[3]); // Left Stick Y
+    xboxonedev[port].data[4] = ApplyStickSensitivity(xboxonedev[port].data[4]); // Right Stick X
+    xboxonedev[port].data[5] = ApplyStickSensitivity(xboxonedev[port].data[5]); // Right Stick Y
     mips_memcpy(dst, xboxonedev[port].data, size);
     ret = xboxonedev[port].analog_btn & 1;
         
