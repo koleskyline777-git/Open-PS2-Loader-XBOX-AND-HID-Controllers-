@@ -12,6 +12,7 @@
 // Force immediate flushing of queued USB HID reports
 #define PADEMU_NO_BUFFER 1
 
+
 static u8 ApplyStickSensitivity(u8 raw_val) {
     int centered = (int)raw_val - 128;
     if (centered > -12 && centered < 12) return 128;
